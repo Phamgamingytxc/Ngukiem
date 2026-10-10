@@ -11,12 +11,22 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Giai nen source
-        run: unzip -oq KiemBayXuatHon-Paper-1_21_11-Source.zip -d src_build
       - name: Build
-        run: mvn -B clean package
-        working-directory: src_build
+        run: |
+          if ls *.zip >/dev/null 2>&1; then
+            mkdir -p src_build
+            unzip -oq "$(ls *.zip | head -n1)" -d src_build
+            DIR=src_build
+          else
+            DIR=.
+          fi
+          POM=$(find "$DIR" -name pom.xml | head -n1)
+          echo "pom: $POM"
+          cd "$(dirname "$POM")"
+          mvn -B clean package
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp target/*.jar "$GITHUB_WORKSPACE/out/"
       - uses: actions/upload-artifact@v4
         with:
           name: KiemBayXuatHon-jar
-          path: src_build/target/*.jar
+          path: out/*.jar
